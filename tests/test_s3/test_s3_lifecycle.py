@@ -227,7 +227,7 @@ def test_lifecycle_with_nve():
     assert len(lfc["Rules"][0]["NoncurrentVersionExpiration"]) == 0
     assert lfc["Rules"][0]["NoncurrentVersionExpiration"].get('NoncurrentDays') == None
     #with assert_raises(ClientError) as err:
-        client.put_bucket_lifecycle_configuration(Bucket="bucket", LifecycleConfiguration=lfc)
+    client.put_bucket_lifecycle_configuration(Bucket="bucket", LifecycleConfiguration=lfc)
     #assert err.exception.response["Error"]["Code"] == "MalformedXML"
 
 
@@ -320,7 +320,7 @@ def test_lifecycle_with_aimu():
     assert len(lfc["Rules"][0]["AbortIncompleteMultipartUpload"]) == 0
     assert lfc["Rules"][0]["AbortIncompleteMultipartUpload"].get('DaysAfterInitiation') == None
     #with assert_raises(ClientError) as err:
-        client.put_bucket_lifecycle_configuration(Bucket="bucket", LifecycleConfiguration=lfc)
+    client.put_bucket_lifecycle_configuration(Bucket="bucket", LifecycleConfiguration=lfc)
     #assert err.exception.response["Error"]["Code"] == "MalformedXML"
 
 
