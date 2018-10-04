@@ -440,7 +440,7 @@ class FakeBucket(BaseModel):
                 nvt_storage_class = rule["NoncurrentVersionTransition"]["StorageClass"]
 
             aimu_days = None
-            if rule.get('AbortIncompleteMultipartUpload')is not None:
+            if rule.get('AbortIncompleteMultipartUpload') is not None:
                 if rule["AbortIncompleteMultipartUpload"].get('DaysAfterInitiation') is None:
                     raise MalformedXML()
                 aimu_days = rule["AbortIncompleteMultipartUpload"]["DaysAfterInitiation"]
