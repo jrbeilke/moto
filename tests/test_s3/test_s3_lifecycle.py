@@ -316,11 +316,13 @@ def test_lifecycle_with_aimu():
     assert result["Rules"][0]["AbortIncompleteMultipartUpload"]["DaysAfterInitiation"] == 30
 
     # With failures for missing children:
-    del lfc["Rules"][0]["AbortIncompleteMultipartUpload"]["DaysAfterInitiation"]
-    assert len(lfc["Rules"][0]["AbortIncompleteMultipartUpload"]) == 0
-    assert lfc["Rules"][0]["AbortIncompleteMultipartUpload"].get('DaysAfterInitiation') == None
+    client.delete_bucket_lifecycle(Bucket="bucket")
+    invalid_lfc = lfc.copy()
+    del invalid_lfc["Rules"][0]["AbortIncompleteMultipartUpload"]["DaysAfterInitiation"]
+    assert len(invalid_lfc["Rules"][0]["AbortIncompleteMultipartUpload"]) == 0
+    assert invalid_lfc["Rules"][0]["AbortIncompleteMultipartUpload"].get('DaysAfterInitiation') == None
     with assert_raises(ClientError) as err:
-        client.put_bucket_lifecycle_configuration(Bucket="bucket", LifecycleConfiguration=lfc)
+        client.put_bucket_lifecycle_configuration(Bucket="bucket", LifecycleConfiguration=invalid_lfc)
     assert err.exception.response["Error"]["Code"] == "MalformedXML"
 
 
