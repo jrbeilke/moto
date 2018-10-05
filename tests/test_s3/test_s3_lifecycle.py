@@ -222,15 +222,7 @@ def test_lifecycle_with_nve():
     assert len(result["Rules"]) == 1
     assert result["Rules"][0]["NoncurrentVersionExpiration"]["NoncurrentDays"] == 10
 
-    # With failures for missing children:
-    del lfc["Rules"][0]["NoncurrentVersionExpiration"]["NoncurrentDays"]
-    assert len(lfc["Rules"][0]["NoncurrentVersionExpiration"]) == 0
-    assert lfc["Rules"][0]["NoncurrentVersionExpiration"].get('NoncurrentDays') == None
-    #with assert_raises(ClientError) as err:
-    #    client.put_bucket_lifecycle_configuration(Bucket="bucket", LifecycleConfiguration=lfc)
-    #assert err.exception.response["Error"]["Code"] == "MalformedXML"
-    response = client.put_bucket_lifecycle_configuration(Bucket="bucket", LifecycleConfiguration=lfc)
-    assert response == lfc
+    # TODO: Add test for failures due to missing children once boto3 and botocore are updated
 
 
 @mock_s3
