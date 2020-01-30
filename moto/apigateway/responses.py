@@ -62,15 +62,19 @@ class APIGatewayResponse(BaseResponse):
                     ).format(api_key_source=api_key_source)
                 )
 
-            if endpoint_configuration and 'types' in endpoint_configuration:
-                if endpoint_configuration['types'] not in ("PRIVATE", "EDGE", 'REGIONAL'):
+            if endpoint_configuration and "types" in endpoint_configuration:
+                if endpoint_configuration["types"] not in (
+                    "PRIVATE",
+                    "EDGE",
+                    "REGIONAL",
+                ):
                     raise ValidationException(
                         (
                             "1 validation error detected: Value '{endpoint_type}' "
                             "at 'createRestApiInput.endpointConfiguration.types' failed "
                             "to satisfy constraint: Member must satisfy enum value set: "
                             "[PRIVATE, EDGE, REGIONAL]"
-                        ).format(endpoint_type=endpoint_configuration['types'])
+                        ).format(endpoint_type=endpoint_configuration["types"])
                     )
 
             rest_api = self.backend.create_rest_api(

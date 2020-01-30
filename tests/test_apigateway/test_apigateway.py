@@ -31,12 +31,8 @@ def test_create_and_get_rest_api():
             "name": "my_api",
             "description": "this is my api",
             "apiKeySource": "HEADER",
-            "endpointConfiguration": {
-                "types": [
-                    "EDGE"
-                ]
-            },
-            "tags": {}
+            "endpointConfiguration": {"types": ["EDGE"]},
+            "tags": {},
         }
     )
 
@@ -63,22 +59,14 @@ def test_create_rest_api_with_tags():
     client = boto3.client("apigateway", region_name="us-west-2")
 
     response = client.create_rest_api(
-        name="my_api",
-        description="this is my api",
-        tags={
-            'MY_TAG1': 'MY_VALUE1'
-        }
+        name="my_api", description="this is my api", tags={"MY_TAG1": "MY_VALUE1"}
     )
     api_id = response["id"]
 
     response = client.get_rest_api(restApiId=api_id)
 
     assert "tags" in response
-    response["tags"].should.equal(
-        {
-            "MY_TAG1": "MY_VALUE1"
-        }
-    )
+    response["tags"].should.equal({"MY_TAG1": "MY_VALUE1"})
 
 
 @mock_apigateway
@@ -93,24 +81,16 @@ def test_create_rest_api__validate_policy():
                 "Effect": "Allow",
                 "Principal": "*",
                 "Action": "execute-api:Invoke",
-                "Resource": [
-                    "arn:aws:execute-api:us-west-2::*"
-                ]
+                "Resource": ["arn:aws:execute-api:us-west-2::*"],
             },
             {
                 "Effect": "Deny",
                 "Principal": "*",
                 "Action": "execute-api:Invoke",
-                "Resource": [
-                   "arn:aws:execute-api:us-west-2::*"
-                ],
-                "Condition" : {
-                    "IpAddress": {
-                        "aws:SourceIp": ["192.168.0.0/16"]
-                    }
-                }
-            }
-        ]
+                "Resource": ["arn:aws:execute-api:us-west-2::*"],
+                "Condition": {"IpAddress": {"aws:SourceIp": ["192.168.0.0/16"]}},
+            },
+        ],
     }
 
     # 1. test invalid policy results in ClientError
@@ -123,9 +103,7 @@ def test_create_rest_api__validate_policy():
 
     # 2. test rest api can be created with valid policy and policy is returned via get
     response = client.create_rest_api(
-        name="my_api",
-        description="this is my api",
-        policy=json.dumps(valid_policy),
+        name="my_api", description="this is my api", policy=json.dumps(valid_policy),
     )
     api_id = response["id"]
 
@@ -148,9 +126,7 @@ def test_create_rest_api__validate_apikeysource():
 
     # 2. test creating rest api with HEADER apiKeySource
     response = client.create_rest_api(
-        name="my_api",
-        description="this is my api",
-        apiKeySource="HEADER",
+        name="my_api", description="this is my api", apiKeySource="HEADER",
     )
     api_id = response["id"]
 
@@ -159,9 +135,7 @@ def test_create_rest_api__validate_apikeysource():
 
     # 3. test creating rest api with AUTHORIZER apiKeySource
     response = client.create_rest_api(
-        name="my_api2",
-        description="this is my api",
-        apiKeySource="AUTHORIZER",
+        name="my_api2", description="this is my api", apiKeySource="AUTHORIZER",
     )
     api_id = response["id"]
 
@@ -178,66 +152,46 @@ def test_create_rest_api__validate_endpointconfiguration():
         client.create_rest_api(
             name="my_api",
             description="this is my api",
-            endpointConfiguration={
-                'types': ['INVALID']
-            },
+            endpointConfiguration={"types": ["INVALID"]},
         )
 
     # 2. test creating rest api with PRIVATE endpointConfiguration
     response = client.create_rest_api(
         name="my_api",
         description="this is my api",
-        endpointConfiguration={
-            'types': ['PRIVATE']
-        },
+        endpointConfiguration={"types": ["PRIVATE"]},
     )
     api_id = response["id"]
 
     response = client.get_rest_api(restApiId=api_id)
     response["endpointConfiguration"].should.equal(
-        {
-            "types": [
-                "PRIVATE"
-            ],
-        }
+        {"types": ["PRIVATE"],}
     )
 
     # 3. test creating rest api with REGIONAL endpointConfiguration
     response = client.create_rest_api(
         name="my_api2",
         description="this is my api",
-        endpointConfiguration={
-            'types': ['REGIONAL']
-        },
+        endpointConfiguration={"types": ["REGIONAL"]},
     )
     api_id = response["id"]
 
     response = client.get_rest_api(restApiId=api_id)
     response["endpointConfiguration"].should.equal(
-        {
-            "types": [
-                "REGIONAL"
-            ],
-        }
+        {"types": ["REGIONAL"],}
     )
 
     # 4. test creating rest api with EDGE endpointConfiguration
     response = client.create_rest_api(
         name="my_api3",
         description="this is my api",
-        endpointConfiguration={
-            'types': ['EDGE']
-        },
+        endpointConfiguration={"types": ["EDGE"]},
     )
     api_id = response["id"]
 
     response = client.get_rest_api(restApiId=api_id)
     response["endpointConfiguration"].should.equal(
-        {
-            "types": [
-                "EDGE"
-            ],
-        }
+        {"types": ["EDGE"],}
     )
 
 

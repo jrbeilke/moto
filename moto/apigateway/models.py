@@ -401,17 +401,12 @@ class RestAPI(BaseModel):
         self.name = name
         self.description = description
         self.create_date = int(time.time())
-        self.api_key_source = kwargs.get("api_key_source", "HEADER")
-        self.endpoint_configuration = kwargs.get(
-            "endpoint_configuration",
-            {
-                "types": [
-                    "EDGE"
-                ]
-            }
-        )
-        self.policy = kwargs.get("policy", None)
-        self.tags = kwargs.get("tags", {})
+        self.api_key_source = kwargs.get("api_key_source") or "HEADER"
+        self.endpoint_configuration = kwargs.get("endpoint_configuration") or {
+            "types": ["EDGE"]
+        }
+        self.policy = kwargs.get("policy") or None
+        self.tags = kwargs.get("tags") or {}
 
         self.deployments = {}
         self.stages = {}
