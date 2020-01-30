@@ -10,6 +10,7 @@ from .exceptions import (
     CrossAccountNotAllowed,
     StageNotFoundException,
     ApiKeyAlreadyExists,
+    ValidationException,
 )
 
 
@@ -45,7 +46,41 @@ class APIGatewayResponse(BaseResponse):
         elif self.method == "POST":
             name = self._get_param("name")
             description = self._get_param("description")
-            rest_api = self.backend.create_rest_api(name, description)
+            api_key_source = self._get_param("apiKeySource")
+            endpoint_configuration = self._get_param("endpointConfiguration")
+            policy = self._get_param("policy")
+            tags = self._get_param("tags")
+
+            # Param validation
+            if api_key_source and api_key_source not in ("AUTHORIZER", "HEADER"):
+                raise ValidationException(
+                    (
+                        "1 validation error detected: "
+                        "Value '{api_key_source}' at 'createRestApiInput.apiKeySource' failed "
+                        "to satisfy constraint: Member must satisfy enum value set: "
+                        "[AUTHORIZER, HEADER]"
+                    ).format(api_key_source=api_key_source)
+                )
+
+            if endpoint_configuration and 'types' in endpoint_configuration:
+                if endpoint_configuration['types'] not in ("PRIVATE", "EDGE", 'REGIONAL'):
+                    raise ValidationException(
+                        (
+                            "1 validation error detected: Value '{endpoint_type}' "
+                            "at 'createRestApiInput.endpointConfiguration.types' failed "
+                            "to satisfy constraint: Member must satisfy enum value set: "
+                            "[PRIVATE, EDGE, REGIONAL]"
+                        ).format(endpoint_type=endpoint_configuration['types'])
+                    )
+
+            rest_api = self.backend.create_rest_api(
+                name,
+                description,
+                api_key_source=api_key_source,
+                endpoint_configuration=endpoint_configuration,
+                policy=policy,
+                tags=tags,
+            )
             return 200, {}, json.dumps(rest_api.to_dict())
 
     def restapis_individual(self, request, full_url, headers):

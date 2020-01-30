@@ -18,6 +18,7 @@ from moto.core import BaseBackend, BaseModel
 from .utils import create_id
 from moto.core.utils import path_url
 from moto.sts.models import ACCOUNT_ID
+from moto.iam.policy_validation import IAMPolicyDocumentValidator
 from .exceptions import (
     ApiKeyNotFoundException,
     AwsProxyNotAllowed,
@@ -394,12 +395,23 @@ class UsagePlanKey(BaseModel, dict):
 
 
 class RestAPI(BaseModel):
-    def __init__(self, id, region_name, name, description):
+    def __init__(self, id, region_name, name, description, **kwargs):
         self.id = id
         self.region_name = region_name
         self.name = name
         self.description = description
         self.create_date = int(time.time())
+        self.api_key_source = kwargs.get("api_key_source", "HEADER")
+        self.endpoint_configuration = kwargs.get(
+            "endpoint_configuration",
+            {
+                "types": [
+                    "EDGE"
+                ]
+            }
+        )
+        self.policy = kwargs.get("policy", None)
+        self.tags = kwargs.get("tags", {})
 
         self.deployments = {}
         self.stages = {}
@@ -411,12 +423,18 @@ class RestAPI(BaseModel):
         return str(self.id)
 
     def to_dict(self):
-        return {
+        data = {
             "id": self.id,
             "name": self.name,
             "description": self.description,
             "createdDate": int(time.time()),
+            "apiKeySource": self.api_key_source,
+            "endpointConfiguration": self.endpoint_configuration,
+            "tags": self.tags,
         }
+        if self.policy:
+            data["policy"] = self.policy
+        return data
 
     def add_child(self, path, parent_id=None):
         child_id = create_id()
@@ -529,9 +547,31 @@ class APIGatewayBackend(BaseBackend):
         self.__dict__ = {}
         self.__init__(region_name)
 
-    def create_rest_api(self, name, description):
+    def create_rest_api(
+        self,
+        name,
+        description,
+        api_key_source=None,
+        endpoint_configuration=None,
+        policy=None,
+        tags=None,
+    ):
+        # Validate policy document using IAM validator if provided
+        if policy:
+            iam_policy_document_validator = IAMPolicyDocumentValidator(policy)
+            iam_policy_document_validator.validate()
+
         api_id = create_id()
-        rest_api = RestAPI(api_id, self.region_name, name, description)
+        rest_api = RestAPI(
+            api_id,
+            self.region_name
+            name,
+            description,
+            api_key_source=api_key_source,
+            endpoint_configuration=endpoint_configuration,
+            policy=policy,
+            tags=tags,
+        )
         self.apis[api_id] = rest_api
         return rest_api
 
