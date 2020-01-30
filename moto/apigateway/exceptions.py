@@ -1,5 +1,5 @@
 from __future__ import unicode_literals
-from moto.core.exceptions import RESTError
+from moto.core.exceptions import JsonRESTError, RESTError
 
 
 class BadRequestException(RESTError):
