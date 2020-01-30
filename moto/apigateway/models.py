@@ -564,7 +564,7 @@ class APIGatewayBackend(BaseBackend):
         api_id = create_id()
         rest_api = RestAPI(
             api_id,
-            self.region_name
+            self.region_name,
             name,
             description,
             api_key_source=api_key_source,
