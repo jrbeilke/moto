@@ -6,6 +6,13 @@ class BadRequestException(RESTError):
     pass
 
 
+class ValidationException(JsonRESTError):
+    code = 400
+
+    def __init__(self, message):
+        super(ValidationException, self).__init__("ValidationException", message)
+
+
 class AwsProxyNotAllowed(BadRequestException):
     def __init__(self):
         super(AwsProxyNotAllowed, self).__init__(
