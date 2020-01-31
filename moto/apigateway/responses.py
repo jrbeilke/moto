@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 import json
 
 from moto.core.responses import BaseResponse
+from moto.iam.exceptions import MalformedPolicyDocument
 from .models import apigateway_backends
 from .exceptions import (
     ApiKeyNotFoundException,
@@ -10,8 +11,10 @@ from .exceptions import (
     CrossAccountNotAllowed,
     StageNotFoundException,
     ApiKeyAlreadyExists,
-    ValidationException,
 )
+
+API_KEY_SOURCES = ["AUTHORIZER", "HEADER"]
+ENDPOINT_CONFIGURATION_TYPES = ["PRIVATE", "EDGE", "REGIONAL"]
 
 
 class APIGatewayResponse(BaseResponse):
@@ -52,40 +55,48 @@ class APIGatewayResponse(BaseResponse):
             tags = self._get_param("tags")
 
             # Param validation
-            if api_key_source and api_key_source not in ("AUTHORIZER", "HEADER"):
-                raise ValidationException(
+            if api_key_source and api_key_source not in API_KEY_SOURCES:
+                return self.error(
+                    "ValidationException",
                     (
                         "1 validation error detected: "
                         "Value '{api_key_source}' at 'createRestApiInput.apiKeySource' failed "
                         "to satisfy constraint: Member must satisfy enum value set: "
                         "[AUTHORIZER, HEADER]"
-                    ).format(api_key_source=api_key_source)
+                    ).format(api_key_source=api_key_source),
                 )
 
             if endpoint_configuration and "types" in endpoint_configuration:
-                if endpoint_configuration["types"] not in (
-                    "PRIVATE",
-                    "EDGE",
-                    "REGIONAL",
-                ):
-                    raise ValidationException(
+                invalid_types = list(
+                    set(endpoint_configuration["types"])
+                    - set(ENDPOINT_CONFIGURATION_TYPES)
+                )
+                if invalid_types:
+                    return self.error(
+                        "ValidationException",
                         (
                             "1 validation error detected: Value '{endpoint_type}' "
                             "at 'createRestApiInput.endpointConfiguration.types' failed "
                             "to satisfy constraint: Member must satisfy enum value set: "
                             "[PRIVATE, EDGE, REGIONAL]"
-                        ).format(endpoint_type=endpoint_configuration["types"])
+                        ).format(endpoint_type=invalid_types[0]),
                     )
 
-            rest_api = self.backend.create_rest_api(
-                name,
-                description,
-                api_key_source=api_key_source,
-                endpoint_configuration=endpoint_configuration,
-                policy=policy,
-                tags=tags,
-            )
-            return 200, {}, json.dumps(rest_api.to_dict())
+            try:
+                rest_api = self.backend.create_rest_api(
+                    name,
+                    description,
+                    api_key_source=api_key_source,
+                    endpoint_configuration=endpoint_configuration,
+                    policy=policy,
+                    tags=tags,
+                )
+                return 200, {}, json.dumps(rest_api.to_dict())
+            except MalformedPolicyDocument:
+                return self.error(
+                    "BadRequestException",
+                    "Invalid policy document. Please check the policy syntax and ensure that Principals are valid.",
+                )
 
     def restapis_individual(self, request, full_url, headers):
         self.setup_class(request, full_url, headers)

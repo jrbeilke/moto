@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 
 import boto3
 from freezegun import freeze_time
+import json
 import requests
 import sure  # noqa
 from botocore.exceptions import ClientError
@@ -70,10 +71,24 @@ def test_create_rest_api_with_tags():
 
 
 @mock_apigateway
-def test_create_rest_api__validate_policy():
+def test_create_rest_api_invalid_policy():
     client = boto3.client("apigateway", region_name="us-west-2")
 
     invalid_policy = "This is not a json document"
+
+    with assert_raises(ClientError) as ex:
+        client.create_rest_api(
+            name="my_api",
+            description="this is my api",
+            policy=json.dumps(invalid_policy),
+        )
+    ex.exception.response["Error"]["Code"].should.equal("BadRequestException")
+
+
+@mock_apigateway
+def test_create_rest_api_valid_policy():
+    client = boto3.client("apigateway", region_name="us-west-2")
+
     valid_policy = {
         "Version": "2012-10-17",
         "Statement": [
@@ -93,15 +108,6 @@ def test_create_rest_api__validate_policy():
         ],
     }
 
-    # 1. test invalid policy results in ClientError
-    with assert_raises(ClientError) as ex:
-        client.create_rest_api(
-            name="my_api",
-            description="this is my api",
-            policy=json.dumps(invalid_policy),
-        )
-
-    # 2. test rest api can be created with valid policy and policy is returned via get
     response = client.create_rest_api(
         name="my_api", description="this is my api", policy=json.dumps(valid_policy),
     )
@@ -113,18 +119,23 @@ def test_create_rest_api__validate_policy():
 
 
 @mock_apigateway
-def test_create_rest_api__validate_apikeysource():
+def test_create_rest_api_invalid_apikeysource():
     client = boto3.client("apigateway", region_name="us-west-2")
 
-    # 1. test invalid apiKeySource results in ClientError
     with assert_raises(ClientError) as ex:
         client.create_rest_api(
             name="my_api",
             description="this is my api",
             apiKeySource="not a valid api key source",
         )
+    ex.exception.response["Error"]["Code"].should.equal("ValidationException")
 
-    # 2. test creating rest api with HEADER apiKeySource
+
+@mock_apigateway
+def test_create_rest_api_valid_apikeysources():
+    client = boto3.client("apigateway", region_name="us-west-2")
+
+    # 1. test creating rest api with HEADER apiKeySource
     response = client.create_rest_api(
         name="my_api", description="this is my api", apiKeySource="HEADER",
     )
@@ -133,7 +144,7 @@ def test_create_rest_api__validate_apikeysource():
     response = client.get_rest_api(restApiId=api_id)
     response["apiKeySource"].should.equal("HEADER")
 
-    # 3. test creating rest api with AUTHORIZER apiKeySource
+    # 2. test creating rest api with AUTHORIZER apiKeySource
     response = client.create_rest_api(
         name="my_api2", description="this is my api", apiKeySource="AUTHORIZER",
     )
@@ -144,18 +155,23 @@ def test_create_rest_api__validate_apikeysource():
 
 
 @mock_apigateway
-def test_create_rest_api__validate_endpointconfiguration():
+def test_create_rest_api_invalid_endpointconfiguration():
     client = boto3.client("apigateway", region_name="us-west-2")
 
-    # 1. test invalid endpointConfiguration results in ClientError
     with assert_raises(ClientError) as ex:
         client.create_rest_api(
             name="my_api",
             description="this is my api",
             endpointConfiguration={"types": ["INVALID"]},
         )
+    ex.exception.response["Error"]["Code"].should.equal("ValidationException")
 
-    # 2. test creating rest api with PRIVATE endpointConfiguration
+
+@mock_apigateway
+def test_create_rest_api_valid_endpointconfigurations():
+    client = boto3.client("apigateway", region_name="us-west-2")
+
+    # 1. test creating rest api with PRIVATE endpointConfiguration
     response = client.create_rest_api(
         name="my_api",
         description="this is my api",
@@ -168,7 +184,7 @@ def test_create_rest_api__validate_endpointconfiguration():
         {"types": ["PRIVATE"],}
     )
 
-    # 3. test creating rest api with REGIONAL endpointConfiguration
+    # 2. test creating rest api with REGIONAL endpointConfiguration
     response = client.create_rest_api(
         name="my_api2",
         description="this is my api",
@@ -181,7 +197,7 @@ def test_create_rest_api__validate_endpointconfiguration():
         {"types": ["REGIONAL"],}
     )
 
-    # 4. test creating rest api with EDGE endpointConfiguration
+    # 3. test creating rest api with EDGE endpointConfiguration
     response = client.create_rest_api(
         name="my_api3",
         description="this is my api",

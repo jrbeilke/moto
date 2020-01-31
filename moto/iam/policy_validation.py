@@ -14,6 +14,8 @@ VALID_STATEMENT_ELEMENTS = [
     "Sid",
     "Action",
     "NotAction",
+    "Principal",
+    "NotPrincipal",
     "Resource",
     "NotResource",
     "Effect",
@@ -178,10 +180,13 @@ class IAMPolicyDocumentValidator:
 
         assert "Resource" not in statement or "NotResource" not in statement
         assert "Action" not in statement or "NotAction" not in statement
+        assert "Principal" not in statement or "NotPrincipal" not in statement
 
         IAMPolicyDocumentValidator._validate_effect_syntax(statement)
         IAMPolicyDocumentValidator._validate_action_syntax(statement)
         IAMPolicyDocumentValidator._validate_not_action_syntax(statement)
+        IAMPolicyDocumentValidator._validate_principal_syntax(statement)
+        IAMPolicyDocumentValidator._validate_not_principal_syntax(statement)
         IAMPolicyDocumentValidator._validate_resource_syntax(statement)
         IAMPolicyDocumentValidator._validate_not_resource_syntax(statement)
         IAMPolicyDocumentValidator._validate_condition_syntax(statement)
@@ -205,6 +210,18 @@ class IAMPolicyDocumentValidator:
     def _validate_not_action_syntax(statement):
         IAMPolicyDocumentValidator._validate_string_or_list_of_strings_syntax(
             statement, "NotAction"
+        )
+
+    @staticmethod
+    def _validate_principal_syntax(statement):
+        IAMPolicyDocumentValidator._validate_string_or_list_of_strings_syntax(
+            statement, "Principal"
+        )
+
+    @staticmethod
+    def _validate_not_principal_syntax(statement):
+        IAMPolicyDocumentValidator._validate_string_or_list_of_strings_syntax(
+            statement, "NotPrincipal"
         )
 
     @staticmethod
