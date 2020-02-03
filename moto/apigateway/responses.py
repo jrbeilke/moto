@@ -3,7 +3,6 @@ from __future__ import unicode_literals
 import json
 
 from moto.core.responses import BaseResponse
-from moto.iam.exceptions import MalformedPolicyDocument
 from .models import apigateway_backends
 from .exceptions import (
     ApiKeyNotFoundException,
@@ -51,7 +50,6 @@ class APIGatewayResponse(BaseResponse):
             description = self._get_param("description")
             api_key_source = self._get_param("apiKeySource")
             endpoint_configuration = self._get_param("endpointConfiguration")
-            policy = self._get_param("policy")
             tags = self._get_param("tags")
 
             # Param validation
@@ -82,21 +80,14 @@ class APIGatewayResponse(BaseResponse):
                         ).format(endpoint_type=invalid_types[0]),
                     )
 
-            try:
-                rest_api = self.backend.create_rest_api(
-                    name,
-                    description,
-                    api_key_source=api_key_source,
-                    endpoint_configuration=endpoint_configuration,
-                    policy=policy,
-                    tags=tags,
-                )
-                return 200, {}, json.dumps(rest_api.to_dict())
-            except MalformedPolicyDocument:
-                return self.error(
-                    "BadRequestException",
-                    "Invalid policy document. Please check the policy syntax and ensure that Principals are valid.",
-                )
+            rest_api = self.backend.create_rest_api(
+                name,
+                description,
+                api_key_source=api_key_source,
+                endpoint_configuration=endpoint_configuration,
+                tags=tags,
+            )
+            return 200, {}, json.dumps(rest_api.to_dict())
 
     def restapis_individual(self, request, full_url, headers):
         self.setup_class(request, full_url, headers)

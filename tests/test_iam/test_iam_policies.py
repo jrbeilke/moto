@@ -1608,55 +1608,6 @@ valid_policy_documents = [
             },
         ],
     },
-    {
-        "Version": "2012-10-17",
-        "Statement": [
-            {
-                "Effect": "Allow",
-                "Principal": "*",
-                "Action": "execute-api:Invoke",
-                "Resource": ["arn:aws:execute-api:us-west-2::*"],
-            },
-            {
-                "Effect": "Deny",
-                "Principal": "*",
-                "Action": "execute-api:Invoke",
-                "Resource": ["arn:aws:execute-api:us-west-2::*"],
-                "Condition": {"IpAddress": {"aws:SourceIp": ["192.168.0.0/16"]}},
-            },
-        ],
-    },
-    {
-        "Version": "2012-10-17",
-        "Statement": [
-            {
-                "Effect": "Allow",
-                "Principal": {
-                    "Service": [
-                        "elasticmapreduce.amazonaws.com",
-                        "datapipeline.amazonaws.com",
-                    ]
-                },
-                "Action": "sts:AssumeRole",
-            }
-        ],
-    },
-    {
-        "Version": "2012-10-17",
-        "Statement": [
-            {
-                "Effect": "Deny",
-                "NotPrincipal": {
-                    "AWS": [
-                        "arn:aws:iam::444455556666:user/Bob",
-                        "arn:aws:iam::444455556666:root",
-                    ]
-                },
-                "Action": "s3:*",
-                "Resource": ["arn:aws:s3:::BUCKETNAME", "arn:aws:s3:::BUCKETNAME/*"],
-            }
-        ],
-    },
 ]
 
 

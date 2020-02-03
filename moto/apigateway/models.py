@@ -18,7 +18,6 @@ from moto.core import BaseBackend, BaseModel
 from .utils import create_id
 from moto.core.utils import path_url
 from moto.sts.models import ACCOUNT_ID
-from moto.iam.policy_validation import IAMPolicyDocumentValidator
 from .exceptions import (
     ApiKeyNotFoundException,
     AwsProxyNotAllowed,
@@ -405,7 +404,6 @@ class RestAPI(BaseModel):
         self.endpoint_configuration = kwargs.get("endpoint_configuration") or {
             "types": ["EDGE"]
         }
-        self.policy = kwargs.get("policy") or None
         self.tags = kwargs.get("tags") or {}
 
         self.deployments = {}
@@ -418,7 +416,7 @@ class RestAPI(BaseModel):
         return str(self.id)
 
     def to_dict(self):
-        data = {
+        return {
             "id": self.id,
             "name": self.name,
             "description": self.description,
@@ -427,9 +425,6 @@ class RestAPI(BaseModel):
             "endpointConfiguration": self.endpoint_configuration,
             "tags": self.tags,
         }
-        if self.policy:
-            data["policy"] = self.policy
-        return data
 
     def add_child(self, path, parent_id=None):
         child_id = create_id()
@@ -548,14 +543,8 @@ class APIGatewayBackend(BaseBackend):
         description,
         api_key_source=None,
         endpoint_configuration=None,
-        policy=None,
         tags=None,
     ):
-        # Validate policy document using IAM validator if provided
-        if policy:
-            iam_policy_document_validator = IAMPolicyDocumentValidator(policy)
-            iam_policy_document_validator.validate()
-
         api_id = create_id()
         rest_api = RestAPI(
             api_id,
@@ -564,7 +553,6 @@ class APIGatewayBackend(BaseBackend):
             description,
             api_key_source=api_key_source,
             endpoint_configuration=endpoint_configuration,
-            policy=policy,
             tags=tags,
         )
         self.apis[api_id] = rest_api

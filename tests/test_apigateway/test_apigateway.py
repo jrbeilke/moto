@@ -3,7 +3,6 @@ from __future__ import unicode_literals
 
 import boto3
 from freezegun import freeze_time
-import json
 import requests
 import sure  # noqa
 from botocore.exceptions import ClientError
@@ -68,54 +67,6 @@ def test_create_rest_api_with_tags():
 
     assert "tags" in response
     response["tags"].should.equal({"MY_TAG1": "MY_VALUE1"})
-
-
-@mock_apigateway
-def test_create_rest_api_invalid_policy():
-    client = boto3.client("apigateway", region_name="us-west-2")
-
-    invalid_policy = "This is not a json document"
-
-    with assert_raises(ClientError) as ex:
-        client.create_rest_api(
-            name="my_api",
-            description="this is my api",
-            policy=json.dumps(invalid_policy),
-        )
-    ex.exception.response["Error"]["Code"].should.equal("BadRequestException")
-
-
-@mock_apigateway
-def test_create_rest_api_valid_policy():
-    client = boto3.client("apigateway", region_name="us-west-2")
-
-    valid_policy = {
-        "Version": "2012-10-17",
-        "Statement": [
-            {
-                "Effect": "Allow",
-                "Principal": "*",
-                "Action": "execute-api:Invoke",
-                "Resource": ["arn:aws:execute-api:us-west-2::*"],
-            },
-            {
-                "Effect": "Deny",
-                "Principal": "*",
-                "Action": "execute-api:Invoke",
-                "Resource": ["arn:aws:execute-api:us-west-2::*"],
-                "Condition": {"IpAddress": {"aws:SourceIp": ["192.168.0.0/16"]}},
-            },
-        ],
-    }
-
-    response = client.create_rest_api(
-        name="my_api", description="this is my api", policy=json.dumps(valid_policy),
-    )
-    api_id = response["id"]
-
-    response = client.get_rest_api(restApiId=api_id)
-
-    json.loads(response["policy"]).should.equal(valid_policy)
 
 
 @mock_apigateway
